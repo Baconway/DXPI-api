@@ -10,3 +10,15 @@ export interface circle {
   name: string;
   points: number;
 }
+
+export interface photoData {
+  date: string;
+  link: string;
+  location: string;
+}
+
+export interface credit {
+  track: number;
+  timestamp: string;
+  name: string;
+}

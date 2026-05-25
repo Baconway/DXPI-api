@@ -1,37 +1,17 @@
 import express, { Router } from "express";
 import { JSDOM } from "jsdom";
-
-import type { photoData } from "../types.js";
+import papa from "papaparse";
 
 const route = Router();
 
-function extractImage(box: Element): photoData {
-  const defaultLink =
-    "https://maimaidx-eng.com/maimai-mobile/playerData/photo/";
-  const defaultDate = "2026/06/07 07:27";
-  const defaultLocation = "nowhere";
+function parseCircleString(
+  name: string | undefined,
+  points: string | undefined,
+): Object {
+  const defaultObj = { name: "", points: 0 };
+  if (!name || !points) return defaultObj;
 
-  const defaultReturn = {
-    date: defaultDate,
-    link: defaultLink,
-    location: defaultLocation,
-  };
-
-  const dateTaken = box.querySelector(".block_info");
-  const downloadSection = box.querySelector(".col2.f_l"); //get the download button
-  const locationSection = box.querySelector(".col2.f_r"); // location right collumn
-
-  if (!dateTaken || !downloadSection || !locationSection) return defaultReturn;
-  const src = downloadSection.querySelector("a"); // href has the img link
-  const locationTaken = locationSection.querySelector(".see_through_block");
-
-  defaultReturn.date = dateTaken.textContent;
-  defaultReturn.link = src ? (src.getAttribute("href") as string) : defaultLink;
-  defaultReturn.location = locationTaken
-    ? locationTaken.textContent
-    : defaultLocation;
-
-  return defaultReturn;
+  return { name: name.trim(), points: parseInt(points.trim(), 10) };
 }
 
 route.use(express.json());
@@ -67,7 +47,7 @@ route.post("/", async (request, response) => {
   });
   const cookieBag = login3.headers.getSetCookie().join("; "); // store ssid cookies to login
   const login4 = await fetch(
-    "https://maimaidx-eng.com/maimai-mobile/playerData/photo/",
+    "https://maimaidx-eng.com/maimai-mobile/circle/circleRanking/",
     {
       method: "GET",
       headers: {
@@ -80,14 +60,36 @@ route.post("/", async (request, response) => {
   );
 
   const parser = new JSDOM(await login4.text());
-  const album: photoData[] = [];
-  parser.window.document
-    .querySelectorAll(".m_10.p_5.f_0")
-    .forEach((photo_div) => album.push(extractImage(photo_div)));
 
-  console.log(album);
+  const top_circles: Object[] = [];
+  const other_circles: Object[] = [];
+
+  parser.window.document
+    .querySelectorAll(".ranking_top_block")
+    .forEach((block) => {
+      top_circles.push(
+        parseCircleString(
+          block.querySelector(".f_l.p_t_10.p_l_10.f_15")?.textContent,
+          block.querySelector(".p_t_10.p_r_10.f_r.f_14")?.textContent,
+        ),
+      );
+    });
+
+  parser.window.document.querySelectorAll(".ranking_block").forEach((block) => {
+    other_circles.push(
+      parseCircleString(
+        block.querySelector(".f_l.p_t_10.p_l_10.f_15")?.textContent,
+        block.querySelector(".p_t_10.p_r_10.f_r.f_14")?.textContent,
+      ),
+    );
+  });
+
+  const combinedLB = top_circles.concat(other_circles);
+
   response.status(201);
-  response.json({ album });
+  response.setHeader("Content-Type", "text/csv");
+
+  response.send(papa.unparse(combinedLB));
 });
 
 export default route;
