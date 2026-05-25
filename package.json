@@ -15,10 +15,12 @@
     "@types/express": "^5.0.6",
     "@types/jsdom": "^28.0.3",
     "@types/node": "^25.9.1",
+    "@types/papaparse": "^5.5.2",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsdom": "^29.1.1",
     "node": "^24.16.0",
+    "papaparse": "^5.5.3",
     "typescript": "^6.0.3"
   }
 }
