@@ -22,3 +22,35 @@ export interface credit {
   timestamp: string;
   name: string;
 }
+
+export interface songType {
+  name: string;
+  artist: string;
+  version: string;
+
+  jacket: string;
+
+  trunc_level: {
+    basic: string | 0;
+    advanced: string | 0;
+    expert: string | 0;
+    master: string | 0;
+
+    dx_basic: string | 0;
+    dx_adv: string | 0;
+    dx_exp: string | 0;
+    dx_mas: string | 0;
+  };
+
+  const_level: {
+    basic: number;
+    advanced: number;
+    expert: number;
+    master: number;
+
+    dx_basic: number;
+    dx_adv: number;
+    dx_exp: number;
+    dx_mas: number;
+  };
+}
