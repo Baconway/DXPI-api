@@ -23,6 +23,12 @@ export interface credit {
   name: string;
 }
 
+export interface tour_member {
+  portrait: string;
+  level: number;
+  leader: boolean;
+}
+
 export interface songType {
   name: string;
   artist: string;
@@ -53,4 +59,15 @@ export interface songType {
     dx_exp: number;
     dx_mas: number;
   };
+}
+
+export interface best50Song {
+  songTitle: string;
+  trunc_lev: string;
+  song_score: string;
+}
+
+export interface b50_holder {
+  ["New"]: best50Song[];
+  ["Others"]: best50Song[];
 }
