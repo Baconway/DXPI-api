@@ -55,11 +55,10 @@ async function insertIntoMemory() {
   return holder;
 }
 
-const memory = await insertIntoMemory();
-
-route.get("/", (request, response) => {
-  response.status(200);
-  response.json(memory[request.query.name as string]);
-});
+const memory = //await insertIntoMemory();
+  route.get("/", (request, response) => {
+    response.status(200);
+    //response.json(memory[request.query.name as string]);
+  });
 
 export default route;

@@ -6,6 +6,12 @@ export interface AchievementItem {
   icon: string;
 }
 
+export interface network_check_result {
+  status: number;
+  message: string;
+  cookies: string[];
+}
+
 export interface circle {
   name: string;
   points: number;
@@ -15,6 +21,16 @@ export interface photoData {
   date: string;
   link: string;
   location: string;
+}
+
+export interface basic_user_info {
+  name: string;
+  rating: number;
+  rating_wrapper: string;
+  stars: number;
+  icon: string;
+  course_dan: string;
+  otomodachi_class: string;
 }
 
 export interface credit {
