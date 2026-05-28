@@ -1,94 +1,59 @@
 import express, { Router } from "express";
 import { JSDOM } from "jsdom";
 
-import type { tour_member } from "../types.js";
+import {
+  DEFAULT_HEADERS,
+  NET_login,
+  networkCheck,
+} from "../api_functions/net_functions.js";
+
+import {
+  TOUR_PARTNER_PAGE,
+  extract_tourMembers,
+} from "../api_functions/collection_functions.js";
 
 const route = Router();
 
-function getTourMembers(tour_mem_parent: Element | null): tour_member[] | null {
-  const tourMembers: tour_member[] = [];
-  if (!tour_mem_parent) return null;
-  const tour_member_holder = tour_mem_parent
-    .querySelectorAll(".p_r.f_0.col5.d_ib")
-    .forEach((tour_mem) => {
-      const member: tour_member = {
-        portrait: "",
-        level: 1,
-        leader: false,
-      };
-      member.portrait = tour_mem
-        .querySelector(".chara_cycle_img")
-        ?.getAttribute("src") as string;
-      member.level = parseInt(
-        tour_mem
-          .querySelector(".collection_chara_lv_block")
-          ?.textContent.replace("Lv", "")
-          .trim() as string,
-        10,
-      );
-      member.leader = tour_mem.querySelector(".collection_chara_leader")
-        ? true
-        : false;
-
-      tourMembers.push(member);
-    });
-
-  return tourMembers;
-}
-
 route.use(express.json());
 
-route.post("/", async (request, response) => {
-  const { cookie } = request.body;
-  const login = await fetch(
-    "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/",
-    {
-      method: "GET",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Cookie: `clal=${cookie}`,
-        credentials: "include",
-      },
+route.get("/", async (request, response) => {
+  const cookie = request.query.cookie as string;
+  if (!cookie) {
+    response.status(400);
+    return response.json("Your request is missing your login cookie!");
+  }
 
-      redirect: "manual",
-    },
-  );
+  const { status, message } = await networkCheck();
 
-  const login3 = await fetch(login.headers.get("location") as string, {
+  if (status !== 200) {
+    response.status(503);
+    return response.json(message);
+  }
+
+  const user_cookies = await NET_login(cookie); // actual cookies for login
+
+  const pageLogin = await fetch(TOUR_PARTNER_PAGE, {
     method: "GET",
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Cookie: `clal=${cookie}`,
+      ...DEFAULT_HEADERS,
+      Cookie: `${user_cookies}`,
       credentials: "include",
     },
 
     redirect: "manual",
   });
-  const cookieBag = login3.headers.getSetCookie().join("; "); // store ssid cookies to login
-  const login4 = await fetch(
-    "https://maimaidx-eng.com/maimai-mobile/collection/character/",
-    {
-      method: "GET",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Cookie: `${cookieBag}`,
-        credentials: "include",
-      },
-    },
-  );
 
-  const parser = new JSDOM(await login4.text());
-  response.status(201);
-  response.json(
-    getTourMembers(
-      parser.window.document.querySelector(
-        ".see_through_block.collection_setting_block",
-      ),
+  const parser = new JSDOM(await pageLogin.text());
+  const tourMembers = extract_tourMembers(
+    parser.window.document.querySelector(
+      ".see_through_block.collection_setting_block",
     ),
   );
+
+  response.status(201);
+  response.json(tourMembers);
+
+  parser.window.close();
 });
 
 export default route;

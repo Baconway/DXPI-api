@@ -50,6 +50,24 @@ export interface tour_member {
   leader: boolean;
 }
 
+export type collection_group = Record<
+  string,
+  string | collection_trophy | collection_partner
+>;
+export interface collection_img {
+  collection_type: string;
+  img_src: string;
+}
+export interface collection_trophy {
+  title: string;
+  background: string;
+}
+export interface collection_partner {
+  partner: string;
+  img_src: string;
+  total_presents?: number;
+}
+
 export interface songType {
   name: string;
   artist: string;

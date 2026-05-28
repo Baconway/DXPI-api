@@ -15,6 +15,7 @@ import song from "./song/song.js";
 import best50 from "./song/b50.js";
 import recent from "./song/recent.js";
 
+import collection from "./collection/collection.js";
 import tour_member from "./collection/tour_member.js";
 
 const app = express();
@@ -33,6 +34,7 @@ app.use("/song/b50", best50);
 app.use("/song/recent", recent);
 app.use("/song", song);
 
+app.use("/collection", collection);
 app.use("/collection/member", tour_member);
 
 app.listen(4000);
