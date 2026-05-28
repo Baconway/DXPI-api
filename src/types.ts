@@ -1,6 +1,4 @@
 export type Achivement = Record<string, AchievementItem>;
-export type circleRanking = Record<string, circle>;
-
 export interface AchievementItem {
   count: string;
   icon: string;
@@ -12,13 +10,20 @@ export interface network_check_result {
   cookies: string[];
 }
 
-export interface circle {
+export interface circle_rank_info {
+  circle_name: string;
+  circle_points: number;
+}
+
+export interface circle_info {
   name: string;
+  code: string;
   points: number;
+  rank: number;
 }
 
 export interface photoData {
-  date: string;
+  date: Date;
   link: string;
   location: string;
 }
@@ -48,6 +53,9 @@ export interface tour_member {
 export interface songType {
   name: string;
   artist: string;
+  genre: string;
+  bpm: string;
+
   version: string;
 
   jacket: string;

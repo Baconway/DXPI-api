@@ -1,8 +1,15 @@
 import express, { Router } from "express";
 import { JSDOM } from "jsdom";
 
-import { DEFAULT_HEADERS, NET_login, networkCheck } from "../misc/net.js";
-import { MAIN_USER_PAGE, parse_user_main } from "../misc/user_functions.js";
+import {
+  DEFAULT_HEADERS,
+  NET_login,
+  networkCheck,
+} from "../api_functions/net_functions.js";
+import {
+  MAIN_USER_PAGE,
+  parse_user_main,
+} from "../api_functions/user_functions.js";
 import type { basic_user_info } from "../types.js";
 
 const router = Router();
@@ -11,6 +18,7 @@ router.use(express.json());
 
 router.get("/", async (request, response) => {
   const cookie = request.query.cookie as string;
+
   if (!cookie) {
     response.status(400);
     return response.json("Your request is missing your login cookie!");
@@ -36,8 +44,10 @@ router.get("/", async (request, response) => {
   });
 
   const parser = new JSDOM(await pageLogin.text());
+
   const user_profileDOM =
     parser.window.document.querySelector(".see_through_block");
+
   const user_profile_extracted: basic_user_info = parse_user_main(
     user_profileDOM as Element,
   );

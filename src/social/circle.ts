@@ -1,80 +1,46 @@
 import express, { Router } from "express";
 import { JSDOM } from "jsdom";
 
+import {
+  DEFAULT_HEADERS,
+  networkCheck,
+  NET_login,
+} from "../api_functions/net_functions.js";
+import {
+  CIRCLE_PAGE,
+  extractCircleData,
+} from "../api_functions/circle_functions.js";
 const route = Router();
 
 route.use(express.json());
 
-function extractCircleData(
-  circle: Element | null,
-  points: Element | null,
-  rank: Element | null,
-) {
-  if (!circle || !points || !rank) return {};
+route.get("/", async (request, response) => {
+  const cookie = request.query.cookie as string;
 
-  console.log(
-    rank
-      .querySelector(".circle_pointranking_point :not([class])")
-      ?.textContent.trim(),
-  );
+  if (!cookie) {
+    response.status(400);
+    return response.json("Your request is missing your login cookie!");
+  }
+  const { status, message } = await networkCheck();
 
-  return {
-    name: circle
-      .querySelector(".circle_profile_circle_name :not([class])")
-      ?.textContent.trim(),
-    code: circle
-      .querySelector(".circle_profile_circle_code :not([class])")
-      ?.textContent.trim(),
-    points: points
-      .querySelector(".circle_totalpoint_point :not([class])")
-      ?.textContent.trim()
-      .replace(/[^0-9]/g, ""),
-    ranking: rank
-      .querySelector(".circle_pointranking_point :not([class])")
-      ?.textContent.trim(),
-  };
-}
+  if (status !== 200) {
+    response.status(503);
+    return response.json(message);
+  }
 
-route.post("/", async (request, response) => {
-  const { cookie } = request.body;
-  const login = await fetch(
-    "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/",
-    {
-      method: "GET",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Cookie: `clal=${cookie}`,
-        credentials: "include",
-      },
+  const user_cookies = await NET_login(cookie); // actual cookies for login
 
-      redirect: "manual",
-    },
-  );
-
-  const login3 = await fetch(login.headers.get("location") as string, {
+  const pageLogin = await fetch(CIRCLE_PAGE, {
     method: "GET",
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Cookie: `clal=${cookie}`,
-      credentials: "include",
-    },
-
-    redirect: "manual",
-  });
-  const cookieBag = login3.headers.getSetCookie().join("; "); // store ssid cookies to login
-  const login4 = await fetch("https://maimaidx-eng.com/maimai-mobile/circle/", {
-    method: "GET",
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Cookie: `${cookieBag}`,
+      ...DEFAULT_HEADERS,
+      Cookie: `${user_cookies}`,
       credentials: "include",
     },
   });
 
-  const parser = new JSDOM(await login4.text());
+  const parser = new JSDOM(await pageLogin.text());
+
   const circleData = extractCircleData(
     parser.window.document.querySelector("#circleProfile"),
     parser.window.document.querySelector(".circle_totalpoint_block"),
@@ -82,7 +48,9 @@ route.post("/", async (request, response) => {
   );
 
   response.status(201);
-  response.json({ circleData });
+  response.json(circleData);
+
+  parser.window.close();
 });
 
 export default route;

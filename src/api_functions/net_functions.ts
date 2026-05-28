@@ -92,6 +92,6 @@ export async function NET_login(clal_cookie: string): Promise<string> {
       redirect: "manual",
     });
   }
-  console.log(currentFetch);
-  return currentFetch.headers.getSetCookie().join("; "); // format it  immediately for used
+
+  return currentFetch.headers.getSetCookie().join("; "); // format it immediately for use
 }

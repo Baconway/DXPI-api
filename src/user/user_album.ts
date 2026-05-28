@@ -1,93 +1,57 @@
 import express, { Router } from "express";
 import { JSDOM } from "jsdom";
 
+import {
+  DEFAULT_HEADERS,
+  networkCheck,
+  NET_login,
+} from "../api_functions/net_functions.js";
+import {
+  ALBUM_USER_PAGE,
+  parse_user_photo,
+} from "../api_functions/user_functions.js";
 import type { photoData } from "../types.js";
 
 const route = Router();
 
-function extractImage(box: Element): photoData {
-  const defaultLink =
-    "https://maimaidx-eng.com/maimai-mobile/playerData/photo/";
-  const defaultDate = "2026/06/07 07:27";
-  const defaultLocation = "nowhere";
-
-  const defaultReturn = {
-    date: defaultDate,
-    link: defaultLink,
-    location: defaultLocation,
-  };
-
-  const dateTaken = box.querySelector(".block_info");
-  const downloadSection = box.querySelector(".col2.f_l"); //get the download button
-  const locationSection = box.querySelector(".col2.f_r"); // location right collumn
-
-  if (!dateTaken || !downloadSection || !locationSection) return defaultReturn;
-  const src = downloadSection.querySelector("a"); // href has the img link
-  const locationTaken = locationSection.querySelector(".see_through_block");
-
-  defaultReturn.date = dateTaken.textContent;
-  defaultReturn.link = src ? (src.getAttribute("href") as string) : defaultLink;
-  defaultReturn.location = locationTaken
-    ? locationTaken.textContent
-    : defaultLocation;
-
-  return defaultReturn;
-}
-
 route.use(express.json());
 
-route.post("/", async (request, response) => {
-  const { cookie } = request.body;
+route.get("/", async (request, response) => {
+  const cookie = request.query.cookie as string;
 
-  const login = await fetch(
-    "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/",
-    {
-      method: "GET",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Cookie: `clal=${cookie}`,
-        credentials: "include",
-      },
+  if (!cookie) {
+    response.status(400);
+    return response.json("Your request is missing your login cookie!");
+  }
+  const { status, message } = await networkCheck();
 
-      redirect: "manual",
-    },
-  );
+  if (status !== 200) {
+    response.status(503);
+    return response.json(message);
+  }
 
-  const login3 = await fetch(login.headers.get("location") as string, {
+  const user_cookies = await NET_login(cookie); // actual cookies for login
+
+  const pageLogin = await fetch(ALBUM_USER_PAGE, {
     method: "GET",
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Cookie: `clal=${cookie}`,
+      ...DEFAULT_HEADERS,
+      Cookie: `${user_cookies}`,
       credentials: "include",
     },
-
-    redirect: "manual",
   });
-  const cookieBag = login3.headers.getSetCookie().join("; "); // store ssid cookies to login
-  const login4 = await fetch(
-    "https://maimaidx-eng.com/maimai-mobile/playerData/photo/",
-    {
-      method: "GET",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Cookie: `${cookieBag}`,
-        credentials: "include",
-      },
-    },
-  );
 
-  const parser = new JSDOM(await login4.text());
+  const parser = new JSDOM(await pageLogin.text());
   const album: photoData[] = [];
+
   parser.window.document
     .querySelectorAll(".m_10.p_5.f_0")
-    .forEach((photo_div) => album.push(extractImage(photo_div)));
+    .forEach((photo_div) => album.push(parse_user_photo(photo_div)));
 
-  console.log(album);
   response.status(201);
-  response.json({ album });
+  response.json(album);
+
+  parser.window.close();
 });
 
 export default route;

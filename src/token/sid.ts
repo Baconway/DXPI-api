@@ -1,7 +1,11 @@
 import "dotenv/config";
 import express, { Router } from "express";
 
-import { DEFAULT_HEADERS, networkCheck, get_clal } from "../misc/net.js";
+import {
+  DEFAULT_HEADERS,
+  networkCheck,
+  get_clal,
+} from "../api_functions/net_functions.js";
 
 const LOGIN_URL = "https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid";
 

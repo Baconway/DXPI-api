@@ -2,6 +2,7 @@ import "dotenv/config";
 import expres, { Router } from "express";
 
 import type { songType } from "../types.js";
+import { VERSION_CODES } from "../api_functions/song_functions.js";
 
 const route = Router();
 
@@ -20,7 +21,9 @@ async function insertIntoMemory() {
     const songConsist: songType = {
       name: song.title,
       artist: song.artist,
-      version: song.catcode,
+      genre: song.catcode,
+      bpm: song.bpm,
+      version: VERSION_CODES[parseInt(song.version.slice(0, 3), 10)] as string,
 
       const_level: {
         basic: song.lev_bas_i ? parseFloat(song.lev_bas_i) : 0,
@@ -55,10 +58,11 @@ async function insertIntoMemory() {
   return holder;
 }
 
-const memory = //await insertIntoMemory();
-  route.get("/", (request, response) => {
-    response.status(200);
-    //response.json(memory[request.query.name as string]);
-  });
+const memory = await insertIntoMemory();
+route.get("/", (request, response) => {
+  response.status(200);
+  console.log(memory[request.query.name as string]);
+  response.json(memory[request.query.name as string]);
+});
 
 export default route;

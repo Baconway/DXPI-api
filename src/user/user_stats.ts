@@ -1,84 +1,59 @@
 import express, { Router } from "express";
 import { JSDOM } from "jsdom";
 
+import {
+  DEFAULT_HEADERS,
+  networkCheck,
+  NET_login,
+} from "../api_functions/net_functions.js";
+import {
+  STATS_USER_PAGE,
+  parse_user_stats,
+} from "../api_functions/user_functions.js";
 import type { AchievementItem, Achivement } from "../types.js";
 
 const route = Router();
 
 route.use(express.json());
 
-route.post("/", async (request, response) => {
-  const { cookie } = request.body;
+route.get("/", async (request, response) => {
+  const cookie = request.query.cookie as string;
 
-  const login = await fetch(
-    "https://lng-tgk-aime-gw.am-all.net/common_auth/login?site_id=maimaidxex&redirect_url=https://maimaidx-eng.com/maimai-mobile/&back_url=https://maimai.sega.com/",
-    {
-      method: "GET",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Cookie: `clal=${cookie}`,
-        credentials: "include",
-      },
+  if (!cookie) {
+    response.status(400);
+    return response.json("Your request is missing your login cookie!");
+  }
+  const { status, message } = await networkCheck();
 
-      redirect: "manual",
-    },
-  );
+  if (status !== 200) {
+    response.status(503);
+    return response.json(message);
+  }
 
-  const login3 = await fetch(login.headers.get("location") as string, {
+  const user_cookies = await NET_login(cookie); // actual cookies for login
+  const pageLogin = await fetch(STATS_USER_PAGE, {
     method: "GET",
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Cookie: `clal=${cookie}`,
+      ...DEFAULT_HEADERS,
+      Cookie: `${user_cookies}`,
       credentials: "include",
     },
-
-    redirect: "manual",
   });
-  const cookieBag = login3.headers.getSetCookie().join("; "); // store ssid cookies to login
-  const login4 = await fetch(
-    "https://maimaidx-eng.com/maimai-mobile/playerData/",
-    {
-      method: "GET",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Cookie: `${cookieBag}`,
-        credentials: "include",
-      },
-    },
-  );
 
-  const parser = new JSDOM(await login4.text());
+  const parser = new JSDOM(await pageLogin.text());
   const SongAchivementStats: Achivement = {};
 
   parser.window.document
     .querySelectorAll(".musiccount_block")
     .forEach((achievement) => {
-      const img = achievement.querySelector(".musiccount_img_block img");
-      const achievement_count = achievement.querySelector(
-        ".musiccount_counter_block",
-      )?.innerHTML;
-
-      if (img && achievement_count) {
-        const imgURL = img.getAttribute("src") || "";
-        const achievement_name =
-          imgURL
-            .split("/")
-            .pop()
-            ?.split("?")[0]
-            ?.replace("music_icon_", "")
-            .replace(".png", "") || "";
-        SongAchivementStats[achievement_name] = {
-          icon: imgURL,
-          count: achievement_count,
-        };
-      }
+      const { name, values } = parse_user_stats(achievement);
+      SongAchivementStats[name] = values;
     });
 
-  response.status(200);
+  response.status(201);
   response.json(SongAchivementStats);
+
+  parser.window.close();
 });
 
 export default route;
