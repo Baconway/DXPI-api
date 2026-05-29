@@ -1,5 +1,7 @@
-import "dotenv/config";
+import { rateLimit } from "express-rate-limit";
+import { slowDown } from "express-slow-down";
 import express from "express";
+import ms from "ms";
 
 import sid from "./token/sid.js";
 import embed from "./token/embed.js";
@@ -18,7 +20,22 @@ import recent from "./song/recent.js";
 import collection from "./collection/collection.js";
 import tour_member from "./collection/tour_member.js";
 
+const rate_limiter = rateLimit({
+  windowMs: ms("10m"),
+  limit: 50,
+  standardHeaders: "draft-8",
+  message: "Too many requests (or if you are a bot, fuck you)",
+});
+const slow_downer = slowDown({
+  windowMs: ms("10m"),
+  delayAfter: 3,
+  delayMs: (hits) => hits * 150,
+});
+
 const app = express();
+
+app.use(rate_limiter);
+app.use(slow_downer);
 
 app.use("/token/sid", sid);
 app.use("/token/embed", embed);
@@ -36,5 +53,19 @@ app.use("/song", song);
 
 app.use("/collection", collection);
 app.use("/collection/member", tour_member);
+
+app.options("/", (request, response) => {
+  const optionsHeaders = new Headers({
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "GET, POST",
+    "Access-Control-Max-Age:": `${ms("7 days")}`,
+    Accept: "application/json; charset=utf-8",
+    Allow: "GET, POST",
+  });
+  response.status(204);
+  response.setHeaders(optionsHeaders);
+
+  response.end();
+});
 
 app.listen(4000);
