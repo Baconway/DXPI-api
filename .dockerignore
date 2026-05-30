@@ -1,2 +1,6 @@
 node_modules
 dist
+.gitignore
+.env
+LICENSE
+README.md

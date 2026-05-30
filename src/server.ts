@@ -29,7 +29,7 @@ const rate_limiter = rateLimit({
 const slow_downer = slowDown({
   windowMs: ms("10m"),
   delayAfter: 3,
-  delayMs: (hits) => hits * 150,
+  delayMs: (hits: any) => hits * 150,
 });
 
 const app = express();
@@ -68,4 +68,4 @@ app.options("/", (request, response) => {
   response.end();
 });
 
-app.listen(5000);
+app.listen(process.env.PORT);

@@ -1,13 +1,19 @@
-# DXPI API
+# DXPI
 
-maimaiDXNET Data Extraction done easily with this API Abstraction
+maimaiDXNET Data Extraction, but as a RESTful API
 
-## Self host
+Built on node, Express and uses JSDOM for scraping
 
-Host in a Docker container
+Aims to be easy to use, combined with good formatting to make whatever you want to get easy
+
+## Self hosting
+
+1. Build your container with the provided Dockerfile
+2. Run your container
+3. Access it with whatever port you put in
 
 ## Credits:
 
-otoge_db: music.json, jacket images
+[otoge_db](https://otoge-db.net): music.json, jacket images
 
-tomomai: method to login with segaID
+[tomomai](https://www.tomomai.lol): method to login with segaID
