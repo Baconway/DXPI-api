@@ -68,4 +68,8 @@ app.options("/", (request, response) => {
   response.end();
 });
 
+app.use((request, response) => {
+  response.sendStatus(404);
+});
+
 app.listen(process.env.PORT);
