@@ -1,6 +1,6 @@
 # DXPI
 
-maimaiDXNET Data Extraction, but as a RESTful API
+Washing machine NET Data Extraction, but as a RESTful API
 
 Built on node, Express and uses JSDOM for scraping
 
