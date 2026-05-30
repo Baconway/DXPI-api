@@ -1,4 +1,3 @@
-import "dotenv/config";
 import express, { Router } from "express";
 
 import {

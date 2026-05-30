@@ -29,6 +29,9 @@ export const VERSION_CODES: Record<number, string> = {
   260: "CiRCLE",
 };
 
+export const SONG_DB = "https://otoge-db.net/maimai/data/music-ex-intl.json";
+export const JACKET_URL = "https://otoge-db.net/maimai/jacket/";
+
 export const BEST50_PAGE =
   "https://maimaidx-eng.com/maimai-mobile/home/ratingTargetMusic/";
 export const RECORD_PAGE = "https://maimaidx-eng.com/maimai-mobile/record/";

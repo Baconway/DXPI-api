@@ -1,15 +1,18 @@
-import "dotenv/config";
-import expres, { Router } from "express";
+import express, { Router } from "express";
 
 import type { songType } from "../types.js";
-import { VERSION_CODES } from "../api_functions/song_functions.js";
+import {
+  VERSION_CODES,
+  SONG_DB,
+  JACKET_URL,
+} from "../api_functions/song_functions.js";
 
 const route = Router();
 
 async function insertIntoMemory() {
   const holder: Record<string, songType> = {};
 
-  const Fetch_songDB = await fetch(process.env.SONG_DB as string, {
+  const Fetch_songDB = await fetch(SONG_DB as string, {
     method: "GET",
   });
 
@@ -49,7 +52,7 @@ async function insertIntoMemory() {
         dx_mas: song.dx_lev_mas ? song.dx_lev_mas : 0,
       },
 
-      jacket: `${process.env.JACKET_URL}/${song.image_url}`,
+      jacket: `${JACKET_URL}/${song.image_url}`,
     };
 
     holder[song.title] = songConsist;

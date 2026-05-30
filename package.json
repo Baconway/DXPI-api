@@ -19,7 +19,6 @@
     "@types/ms": "^2.1.0",
     "@types/node": "^25.9.1",
     "@types/papaparse": "^5.5.2",
-    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "express-slow-down": "^3.1.0",
